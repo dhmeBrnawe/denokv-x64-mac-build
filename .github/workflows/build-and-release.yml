@@ -14,6 +14,7 @@ env:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   build:
     name: stable - x86_64-apple-darwin - node@18
@@ -28,7 +29,7 @@ jobs:
         shell: bash
         run: echo "LATEST_TAG=$(curl https://api.github.com/repos/denoland/denokv/tags | jq -r '.[0].name')" >> $GITHUB_ENV
 
-      - name: Fetch denokv repo at "${{ env.LATEST_TAG }}" tag
+      - name: Fetch denokv repository at "${{ env.LATEST_TAG }}" tag
         uses: actions/checkout@v4
         with:
           repository: denoland/denokv
@@ -76,10 +77,3 @@ jobs:
 
       - name: Release the build
         run: gh release new ${{ env.LATEST_TAG }} --repo $GITHUB_REPOSITORY ./npm/napi/deno-kv-napi.darwin-x64.node
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bindings-x86_64-apple-darwin
-          path: npm/napi/deno-kv-napi.darwin-x64.node
-          if-no-files-found: error
