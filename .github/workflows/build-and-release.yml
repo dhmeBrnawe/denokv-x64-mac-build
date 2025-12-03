@@ -2,7 +2,7 @@ name: npm
 env:
   DEBUG: napi:*
   MACOSX_DEPLOYMENT_TARGET: '10.13'
-
+  GH_TOKEN: ${{ github.token }}
 on:
   workflow_dispatch:
   push:
