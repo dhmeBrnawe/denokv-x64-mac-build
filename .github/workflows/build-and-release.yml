@@ -27,7 +27,10 @@ jobs:
     steps:
       - name: Get denokv's latest tag
         shell: bash
-        run: echo "LATEST_TAG=$(curl https://api.github.com/repos/denoland/denokv/tags | jq -r '.[0].name')" >> $GITHUB_ENV
+        run: |
+          repoUrl=https://api.github.com/repos/denoland/denokv/tags
+          tag=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $repoUrl | jq -r '.[0].name')
+          echo "LATEST_TAG=$tag" >> $GITHUB_ENV
 
       - name: Fetch denokv repository at "${{ env.LATEST_TAG }}" tag
         uses: actions/checkout@v4
