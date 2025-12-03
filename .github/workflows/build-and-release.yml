@@ -21,13 +21,17 @@ jobs:
       contents: write
     env: 
       GH_TOKEN: ${{ github.token }}
+      LATEST_TAG: ""
     runs-on: macos-15-intel
     steps:
-      - name: Fetch denokv repo
+      - name: Get denokv's latest tag
+        run: echo "LATEST_TAG=$(curl https://api.github.com/repos/denoland/denokv/tags | jq .[0].name)" >> $GITHUB_ENV
+
+      - name: Fetch denokv repo at "${{ env.LATEST_TAG }}" tag
         uses: actions/checkout@v4
         with:
           repository: denoland/denokv
-          ref: main
+          ref: ${{ env.LATEST_TAG }}
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -72,13 +76,8 @@ jobs:
         run: cargo clippy --release --all-targets --all-features -- -D clippy::all
         working-directory: ./npm/napi
 
-      - name: Extract the latest tag
-        run: | 
-          git fetch --tags
-          echo "LATEST_TAG=$(git tag | sort -V | tail -n 1)" >> $GITHUB_ENV
-
       - name: Release the build
-        run: gh release new $LATEST_TAG --repo $GITHUB_REPOSITORY ./npm/napi/deno-kv-napi.darwin-x64.node
+        run: gh release new ${{ env.LATEST_TAG }} --repo $GITHUB_REPOSITORY ./npm/napi/deno-kv-napi.darwin-x64.node
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
