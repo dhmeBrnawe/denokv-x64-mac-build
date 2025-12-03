@@ -1,8 +1,5 @@
 name: npm
-env:
-  DEBUG: napi:*
-  MACOSX_DEPLOYMENT_TARGET: '10.13'
-  GH_TOKEN: ${{ github.token }}
+
 on:
   workflow_dispatch:
   push:
@@ -10,12 +7,20 @@ on:
       - main
   pull_request: null
 
+env:
+  DEBUG: napi:*
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
     name: stable - x86_64-apple-darwin - node@18
+    permissions:
+      contents: write
+    env: 
+      GH_TOKEN: ${{ github.token }}
     runs-on: macos-15-intel
     steps:
       - name: Fetch denokv repo
@@ -71,7 +76,7 @@ jobs:
         run: echo "LATEST_TAG=$(git tag --list | sort -V | tail -n 1)" >> $GITHUB_ENV
 
       - name: Release the build
-        run: gh release new $LATEST_TAG --repo $GITHUB_REPOSITORY npm/napi/deno-kv-napi.darwin-x64.node
+        run: gh release new $LATEST_TAG npm/napi/deno-kv-napi.darwin-x64.node
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
