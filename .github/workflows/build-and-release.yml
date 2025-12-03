@@ -1,0 +1,80 @@
+name: npm
+env:
+  DEBUG: napi:*
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request: null
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: stable - x86_64-apple-darwin - node@18
+    runs-on: macos-15-intel
+    steps:
+      - name: Fetch denokv repo
+        uses: actions/checkout@v4
+        with:
+          repository: denoland/denokv
+          path: denokv
+          ref: main
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+          cache-dependency-path: denokv/npm/napi/yarn.lock
+
+      - name: Remove rust-toolchain.toml (conflicts with mac arm64 build)
+        run: rm rust-toolchain.toml
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-apple-darwin
+
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .cargo-cache
+            target/
+          key: x86_64-apple-darwin-cargo-macos-15-intel
+
+      - name: Install dependencies
+        run: yarn install
+        working-directory: denokv/npm/napi
+
+      - name: Build
+        working-directory: denokv/npm/napi
+        shell: bash
+        run: |
+          brew install protobuf
+          yarn build --target x86_64-apple-darwin
+          strip -x *.node
+
+      - name: Check linting # needs to run after build so protoc is available
+        run: cargo clippy --release --all-targets --all-features -- -D clippy::all
+        working-directory: denokv/npm/napi
+
+      - name: list outputs
+        run: ls -R && ls -R ./npm
+        working-directory: denokv/npm/napi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-x86_64-apple-darwin
+          path: denokv/npm/napi/deno-kv-napi.*.node
+          if-no-files-found: error
