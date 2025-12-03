@@ -28,7 +28,6 @@ jobs:
         with:
           repository: denoland/denokv
           ref: main
-          fetch-tags: true
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -74,7 +73,9 @@ jobs:
         working-directory: ./npm/napi
 
       - name: Extract the latest tag
-        run: echo "LATEST_TAG=$(git tag | sort -V | tail -n 1)" >> $GITHUB_ENV
+        run: | 
+          git fetch --tags
+          echo "LATEST_TAG=$(git tag | sort -V | tail -n 1)" >> $GITHUB_ENV
 
       - name: Release the build
         run: gh release new $LATEST_TAG --repo $GITHUB_REPOSITORY ./npm/napi/deno-kv-napi.darwin-x64.node
