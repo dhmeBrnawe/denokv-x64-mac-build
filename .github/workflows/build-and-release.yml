@@ -76,7 +76,7 @@ jobs:
         run: echo "LATEST_TAG=$(git tag --list | sort -V | tail -n 1)" >> $GITHUB_ENV
 
       - name: Release the build
-        run: gh release new $LATEST_TAG --repo $GITHUB_REPOSITORY npm/napi/deno-kv-napi.darwin-x64.node
+        run: gh release new $LATEST_TAG --repo $GITHUB_REPOSITORY ./npm/napi/deno-kv-napi.darwin-x64.node
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
